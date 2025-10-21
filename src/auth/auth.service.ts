@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
   ConflictException,
@@ -57,7 +58,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user.password as string,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }

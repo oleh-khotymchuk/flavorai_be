@@ -24,10 +24,28 @@ async function bootstrap() {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const origins = Array.from(new Set([...allowedLocalOrigins, ...envOrigins]));
+  // Normalize origins: trim whitespace and trailing slashes, lower-case for comparison
+  const normalize = (u: string) => u.trim().replace(/\/+$/, '');
+  const normalizedOrigins = Array.from(
+    new Set([...allowedLocalOrigins, ...envOrigins].map((o) => normalize(o))),
+  );
 
+  // Use a function so we return a single allowed origin value in the response header
   app.enableCors({
-    origin: origins,
+    origin: (
+      requestOrigin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      // Allow non-browser requests (no origin)
+      if (!requestOrigin) return callback(null, true);
+
+      const originToCheck = normalize(requestOrigin);
+      if (normalizedOrigins.includes(originToCheck)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Origin ${requestOrigin} not allowed by CORS`));
+    },
     credentials: true,
   });
 
